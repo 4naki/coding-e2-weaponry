@@ -1,0 +1,133 @@
+@name Charge Grenade Launcher
+@inputs Fire
+@outputs BarrelCapacityState BarrelCapacity
+@persist Array:array Spread MuzzleVelocity AngularVelocity Offset ShowDirectionIndicator ProjectileSize:vector ProjectileModel:string
+@persist BarrelCapacityState BarrelCapacity FPS A ChargeSpeed
+#debug
+@outputs Array:array 
+
+@model models/sprops/cuboids/height12/size_1/cube_12x30x12.mdl
+interval(100)
+if(first()){
+    
+    Offset=25
+    
+    ShowDirectionIndicator=1
+    
+    holoCreate(9999)
+    holoPos(9999, entity():toWorld(vec(Offset,0,0)))
+    holoAng(9999, entity():toWorld(ang(90,0,0)))
+    holoModel(9999, "models/sprops/misc/alphanum/alphanum_arrow_b.mdl")
+    holoParent(9999, entity())
+    
+    holoAlpha(9999, 255*ShowDirectionIndicator)
+
+    Array=array()
+    
+    Spread=3
+    MuzzleVelocity=1700
+    AngularVelocity=45
+    
+    ProjectileSize=vec(1,1,1)
+    ProjectileModel="models/props_phx/ww2bomb.mdl"
+    
+    #default 1000/4.7
+    FPS=1000/4.7
+    
+    #default 70
+    ChargeSpeed=50
+}
+if(Fire){
+    if(BarrelCapacityState<100){
+        timer("charge",100)
+        if(clk("charge")){
+            BarrelCapacityState=BarrelCapacityState+100/ChargeSpeed
+        }
+        if(BarrelCapacityState>(99/8)*1){
+            if(BarrelCapacityState<(90/8)*2){
+                BarrelCapacity=1
+            }
+        }
+        if(BarrelCapacityState>(99/8)*2){
+            if(BarrelCapacityState<(90/8)*3){
+                BarrelCapacity=2
+            }
+        }
+        if(BarrelCapacityState>(99/8)*3){
+            if(BarrelCapacityState<(90/8)*4){
+                BarrelCapacity=3
+            }
+        }
+        if(BarrelCapacityState>(99/8)*4){
+            if(BarrelCapacityState<(90/8)*5){
+                BarrelCapacity=4
+            }
+        }
+        if(BarrelCapacityState>(99/8)*5){
+            if(BarrelCapacityState<(90/8)*6){
+                BarrelCapacity=5
+            }
+        }
+        if(BarrelCapacityState>(99/8)*6){
+            if(BarrelCapacityState<(90/8)*7){
+                BarrelCapacity=6
+            }
+        }
+        if(BarrelCapacityState>(99/8)*7){
+            if(BarrelCapacityState<(90/8)*8){
+                BarrelCapacity=7
+            }
+        }
+        if(BarrelCapacityState>(99/8)*8){
+            BarrelCapacity=8
+        }
+    }
+}
+if(!Fire){
+    if(BarrelCapacity>0){
+        if(A<BarrelCapacity+1){
+            timer("shoot",FPS)
+        }
+    if(clk("shoot")){
+            if(A<BarrelCapacity){
+            A=A+1
+                propSpawnASync(1)
+                Prop=propSpawn("models/props_junk/gascan001a.mdl",entity():toWorld(((ang(randint(-360,360),randint(-360,360),randint(-360,360)))/360)*Spread),0)
+                Prop:propDrag(0)
+                Prop:propGravity(600)
+                Prop:setPos(entity():toWorld(vec(Offset,0,0)))
+                Prop:setTrails(4,0,0.6,"trails/smoke",vec(255),255)
+                Array:pushEntity(Prop)
+                Prop:propSetVelocity(Prop:forward()*MuzzleVelocity)
+            }else{
+                A=0
+                BarrelCapacity=0
+                BarrelCapacityState=0
+            }
+        }
+    }
+}
+foreach(I,E:entity=Array){    
+    E:propDraw(0)
+    E:propDrag(0)
+    E:applyAngForce(ang(randint(-100,100),randint(-100,100),randint(-100,100))*AngularVelocity/2)
+    
+    rangerFilter(E)
+    rangerFilter(entity())
+    if(rangerOffset(150, E:pos(), E:vel() * 1):hit())
+    {
+        E:propBreak()
+        E:propGravity(600)
+    }
+    holoCreate(I)
+    holoModel(I, ProjectileModel)
+    holoMaterial(I, "")
+    holoColor(I, vec(255,255,255))
+    holoPos(I, E:toWorld(vec(0,0,0)))
+    holoAng(I, E:toWorld(ang(0,0,0)))
+    holoParent(I, E)
+    holoScale(I, ProjectileSize)
+    if(!(E:isValid())){
+        Array:remove(I)
+    }
+}
