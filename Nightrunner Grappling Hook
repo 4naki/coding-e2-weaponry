@@ -1,0 +1,107 @@
+@name Nightrunner Grappling Hook
+@persist HookCheck Hook [RightPos Pos SaveDir]:vector
+@trigger none
+runOnKeys(owner(),1)
+interval(50)
+
+if(first()){
+    
+    MDL="models/hunter/plates/plate.mdl"
+    P1=propSpawn(MDL,ang(0,0,0),1)
+    P2=propSpawn(MDL,ang(0,0,0),1)
+    Array=array(P1,P2)
+    
+    foreach(I,E:entity=Array){
+        E:setNoCollideAll(1)
+        E:setAlpha(0)
+    }
+    
+    for(I=1,2){
+        holoCreate(I)
+        holoPos(I,Array[I,entity]:pos())
+        holoAng(I,ang(0,0,0))
+        holoAlpha(I,0)
+    }
+    
+    P1:parentTo(holoEntity(1))
+    P2:parentTo(holoEntity(2))
+    
+    rope(1,P1,vec(0,0,0),P2,vec(0,0,0),125,2,"cable/rope",1)
+    
+    #Update Check Code By Naki
+    #ifdef httpRequest(string)
+        Link = ""
+        VersionCheckLink = ""
+        Version = "1.0"
+        
+        runOnHTTP(1)
+        if(Link!=""){
+        }else{
+            print("Link is empty!")
+            Block=1
+        }
+        if(VersionCheckLink!=""){
+            httpRequest(VersionCheckLink)
+        }else{
+            print("VersionCheckLink is empty!")
+            Block=1
+        }
+    #else
+        print("HTTP Core Not Found!")
+    #endif
+}
+HookButton=owner():keyPressed("mouse_4")
+
+if(changed(HookButton)&HookButton){
+    Hook=(!Hook)*(owner():aimPos():distance(owner():pos())<2000)
+}
+
+if(Hook){
+    holoPos(1,owner():attachmentPos("anim_attachment_RH"))
+    Pos=holoEntity(2):pos()
+    if(Pos!=vec(0,0,0)){
+        PullForce=(((-(owner():pos()-Pos):normalized())*((30+(-200+clamp(abs(Pos:distance(owner():pos())*0.5),0,350))*((-300+abs(Pos:distance(owner():pos())*0.25))>0))))*Hook)-owner():vel()*0.01
+        DirectionalForce=((owner():eyeAngles():forward()*(owner():keyForward()-owner():keyBack()))-(owner():eyeAngles():right()*(owner():keyLeft()-owner():keyRight())))*15
+        owner():plyApplyForce(PullForce+DirectionalForce)
+        if(holoEntity(2):parent():isPlayer()){
+            holoEntity(2):parent():plyApplyForce(((owner():pos()-holoEntity(2):parent():pos()):normalized())*clamp(400*holoEntity(2):parent():mass(),0,15000))
+        }elseif(holoEntity(2):parent():isWorld()==0){
+            holoEntity(2):parent():applyForce(((owner():pos()-holoEntity(2):parent():pos()):normalized())*clamp(400*holoEntity(2):parent():mass(),0,15000))
+        }
+    }
+    HookCheck=1
+    SaveDir=(-(owner():pos()-Pos):normalized())
+}else{
+    holoPos(1,vec(0,0,0))
+    Pos=vec(0,0,0)
+    if(HookCheck){
+        owner():plyApplyForce((SaveDir+vec(0,0,1))*50)
+        timer("HookCheck",250)
+    }
+}
+if(clk("HookCheck")){
+    HookCheck=0
+}
+if(changed(Hook)){
+    if(Hook){
+        holoParent(2,owner():aimEntity())
+        holoPos(2,owner():aimPos())
+    }else{
+        holoPos(2,vec(0,0,0))
+        holoUnparent(2)
+    }
+}
+#ifdef httpRequest(string)
+    if(httpSuccess()&!Block){
+        ReturnData=httpUrlDecode(httpData())
+        
+        print("["+entity():getName()+"]")
+        print("Running version: "+Version)
+        
+        if(Version!=ReturnData){
+            print("Update available!")
+            print("Latest version: "+ReturnData)
+            print("Link: "+Link)
+        }
+    }
+#endif
