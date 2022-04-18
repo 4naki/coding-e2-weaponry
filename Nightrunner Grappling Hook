@@ -1,5 +1,8 @@
 @name Nightrunner Grappling Hook
 @persist HookCheck Hook [RightPos Pos SaveDir]:vector
+#ifdef httpRequest(string)
+@persist [Version Link]:string Block
+#endif
 @trigger none
 runOnKeys(owner(),1)
 interval(50)
@@ -92,16 +95,18 @@ if(changed(Hook)){
     }
 }
 #ifdef httpRequest(string)
-    if(httpSuccess()&!Block){
-        ReturnData=httpUrlDecode(httpData())
-        
-        print("["+entity():getName()+"]")
-        print("Running version: "+Version)
-        
-        if(Version!=ReturnData){
-            print("Update available!")
-            print("Latest version: "+ReturnData)
-            print("Link: "+Link)
+    if(httpClk()){
+        if(httpSuccess()&!Block){
+            ReturnData=httpUrlDecode(httpData())
+            
+            print("["+entity():getName()+"]")
+            print("Running version: "+Version)
+            
+            if(Version:toNumber()!=ReturnData:toNumber()){
+                print("Update available!")
+                print("Latest version: "+ReturnData)
+                print("Link: "+Link)
+            }
         }
     }
 #endif
