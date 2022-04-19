@@ -41,7 +41,7 @@ if(first()){
     #ifdef httpRequest(string)
         Link = "https://github.com/4naki/coding-e2-weaponry/blob/main/Nightrunner%20Grappling%20Hook"
         VersionCheckLink = "https://raw.githubusercontent.com/4naki/coding-e2-weaponry/main/version"
-        Version = "1.1"
+        Version = "1.2"
         
         runOnHTTP(1)
         if(Link!=""){
